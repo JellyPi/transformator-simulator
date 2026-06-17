@@ -376,7 +376,7 @@ def teken_vector(ax, start, delta, label, color, lw=2.0, linestyle="-", offset=(
     end = start + delta
     ax.annotate("", xy=(end.real, end.imag), xytext=(start.real, start.imag),
                 arrowprops=dict(arrowstyle="-|>", lw=lw, color=color, linestyle=linestyle, alpha=alpha), zorder=5)
-    ax.text(end.real + offset[0], end.imag + offset[1], label, color=color, fontsize=10, fontweight="bold",
+    ax.text(end.real + offset[0], end.imag + offset[1], label, color=color, fontsize=8.5, fontweight="bold",
             bbox=dict(facecolor="white", edgecolor="none", alpha=0.70, pad=0.6), zorder=6)
 
 
@@ -397,7 +397,7 @@ def teken_fasehoek(ax, radius, a_spanning, a_stroom, label):
     start = end - seg_len * np.array([math.cos(tangent), math.sin(tangent)])
     ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="-|>", lw=1.1, color="#777777"), zorder=7)
     mid = math.radians(mid_deg)
-    ax.text(1.18 * radius * math.cos(mid), 1.18 * radius * math.sin(mid), label, color="#777777", fontsize=9)
+    ax.text(1.18 * radius * math.cos(mid), 1.18 * radius * math.sin(mid), label, color="#777777", fontsize=8)
 
 
 def bereken_flux_lengtes(res: Resultaat):
@@ -434,7 +434,7 @@ def plot_vectordiagram(res: Resultaat):
     phi2_len = min(3.0, 1.65 * phi2_abs / phi_ref) if phi2_abs > EPS else 0.0
 
     zero = 0.0 + 0.0j
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(5.8, 5.8), dpi=120)
     ax.set_aspect("equal", adjustable="box"); ax.set_xlim(-7.8, 7.8); ax.set_ylim(-8.4, 8.4); ax.axis("off")
     ax.axhline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0); ax.axvline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0)
 
@@ -461,7 +461,7 @@ def plot_vectordiagram(res: Resultaat):
         teken_fasehoek(ax, 1.18, hoek_graden(U2p), hoek_graden(I2p), r"$\varphi_2$")
     ax.add_patch(patches.FancyArrowPatch((6.0, -1.0), (6.0, 1.0), connectionstyle="arc3,rad=0.48",
                                          arrowstyle="-|>", mutation_scale=13, color="black", linewidth=1.5, zorder=2))
-    ax.text(6.75, 0.10, r"$\omega$", fontsize=12)
+    ax.text(6.75, 0.10, r"$\omega$", fontsize=10)
     if nullastmodus:
         ax.text(-7.55, 8.10, "Nullast: R1I1 en jX1I1 bestaan, maar zijn te klein om zinvol te tekenen.",
                 fontsize=7.8, color="#8a5a00", ha="left", va="top",
@@ -483,7 +483,7 @@ def plot_rendement(res: Resultaat):
     volgorde = np.argsort(i_arr); i_arr = i_arr[volgorde]; e_arr = e_arr[volgorde]
     uniek = np.concatenate(([True], np.diff(i_arr) > max(1e-9, 1e-7 * res.I2n)))
     i_arr = i_arr[uniek]; e_arr = e_arr[uniek]
-    fig, ax = plt.subplots(figsize=(6, 3))
+    fig, ax = plt.subplots(figsize=(5.2, 2.6), dpi=120)
     ax.plot(i_arr, e_arr, linewidth=1.5)
     ax.plot([cabs(res.I2)], [res.eta], marker="o", markersize=6)
     ax.axvline(cabs(res.I2), linewidth=0.7, linestyle="--", alpha=0.55)
@@ -501,6 +501,23 @@ def plot_rendement(res: Resultaat):
 
 
 st.set_page_config(page_title="Simulator niet-ideale eenfasige transformator", layout="wide")
+st.markdown(
+    """
+    <style>
+    div[data-testid="stImage"] img {
+        max-width: 100%;
+        height: auto;
+    }
+    @media (max-width: 1100px) {
+        section.main div.block-container {
+            padding-left: 1.0rem;
+            padding-right: 1.0rem;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 st.title("Simulator niet-ideale eenfasige transformator")
 st.caption("Didactische simulator voor het equivalent schema, het vectordiagram en het rendement.")
 
@@ -589,9 +606,10 @@ top4.metric("status", res.status)
 tab1, tab2, tab3 = st.tabs(["Vectordiagram", "Tabellen", "Rendement"])
 
 with tab1:
-    col_fig, col_info = st.columns([2.2, 1])
+    st.caption("Het vectordiagram schaalt automatisch mee met de beschikbare breedte van het browservenster.")
+    col_fig, col_info = st.columns([1.45, 1])
     with col_fig:
-        st.pyplot(plot_vectordiagram(res), clear_figure=True)
+        st.pyplot(plot_vectordiagram(res), clear_figure=True, use_container_width=True)
     with col_info:
         st.subheader("Hoeken")
         phi1_deg = fasehoek_stroom_tov_spanning(res.U1, res.I1)
@@ -626,4 +644,5 @@ with tab2:
     st.dataframe(tabellen["Verliezen en werking"], hide_index=True, use_container_width=True)
 
 with tab3:
-    st.pyplot(plot_rendement(res), clear_figure=True)
+    st.caption("De rendementsgrafiek wordt compact getoond en schaalt mee met de schermbreedte.")
+    st.pyplot(plot_rendement(res), clear_figure=True, use_container_width=True)
