@@ -370,14 +370,14 @@ def maak_diagramfasoren(res: Resultaat):
             "I1_prime": res.I1_prime * rot, "I2": res.I2 * rot}
 
 
-def teken_vector(ax, start, delta, label, color, lw=2.0, linestyle="-", offset=(0.1, 0.1), visible=True, alpha=1.0):
+def teken_vector(ax, start, delta, label, color, lw=0.95, linestyle="-", offset=(0.08, 0.08), visible=True, alpha=1.0):
     if not visible or cabs(delta) <= 1e-9 or not np.isfinite(cabs(delta)):
         return
     end = start + delta
     ax.annotate("", xy=(end.real, end.imag), xytext=(start.real, start.imag),
-                arrowprops=dict(arrowstyle="-|>", lw=lw, color=color, linestyle=linestyle, alpha=alpha), zorder=5)
-    ax.text(end.real + offset[0], end.imag + offset[1], label, color=color, fontsize=8.5, fontweight="bold",
-            bbox=dict(facecolor="white", edgecolor="none", alpha=0.70, pad=0.6), zorder=6)
+                arrowprops=dict(arrowstyle="-|>", lw=lw, color=color, linestyle=linestyle, alpha=alpha, mutation_scale=8), zorder=5)
+    ax.text(end.real + offset[0], end.imag + offset[1], label, color=color, fontsize=6.8, fontweight="bold",
+            bbox=dict(facecolor="white", edgecolor="none", alpha=0.60, pad=0.30), zorder=6)
 
 
 def teken_fasehoek(ax, radius, a_spanning, a_stroom, label):
@@ -389,15 +389,15 @@ def teken_fasehoek(ax, radius, a_spanning, a_stroom, label):
     else:
         theta1 = a_stroom; theta2 = a_spanning; mid_deg = a_stroom - 0.5 * delta
     ax.add_patch(patches.Arc((0, 0), 2 * radius, 2 * radius, theta1=theta1, theta2=theta2,
-                             color="#777777", lw=1.2, ls="--"))
+                             color="#777777", lw=0.70, ls="--"))
     a_end = math.radians(a_stroom)
     tangent = a_end + (math.pi / 2.0 if delta > 0 else -math.pi / 2.0)
     end = np.array([radius * math.cos(a_end), radius * math.sin(a_end)])
-    seg_len = 0.22 * radius
+    seg_len = 0.14 * radius
     start = end - seg_len * np.array([math.cos(tangent), math.sin(tangent)])
-    ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="-|>", lw=1.1, color="#777777"), zorder=7)
+    ax.annotate("", xy=end, xytext=start, arrowprops=dict(arrowstyle="-|>", lw=0.55, color="#777777", mutation_scale=7), zorder=7)
     mid = math.radians(mid_deg)
-    ax.text(1.18 * radius * math.cos(mid), 1.18 * radius * math.sin(mid), label, color="#777777", fontsize=8)
+    ax.text(1.18 * radius * math.cos(mid), 1.18 * radius * math.sin(mid), label, color="#777777", fontsize=7)
 
 
 def bereken_flux_lengtes(res: Resultaat):
@@ -434,39 +434,39 @@ def plot_vectordiagram(res: Resultaat):
     phi2_len = min(3.0, 1.65 * phi2_abs / phi_ref) if phi2_abs > EPS else 0.0
 
     zero = 0.0 + 0.0j
-    fig, ax = plt.subplots(figsize=(5.8, 5.8), dpi=120)
-    ax.set_aspect("equal", adjustable="box"); ax.set_xlim(-7.8, 7.8); ax.set_ylim(-8.4, 8.4); ax.axis("off")
+    fig, ax = plt.subplots(figsize=(5.0, 5.0), dpi=170)
+    ax.set_aspect("equal", adjustable="box"); ax.set_xlim(-7.2, 7.2); ax.set_ylim(-7.45, 7.45); ax.axis("off")
     ax.axhline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0); ax.axvline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0)
 
-    teken_vector(ax, zero, minusE1p, r"$-\overline{E}_1$", "#2c7be5", lw=2.3, offset=(-0.82, 0.12))
-    teken_vector(ax, minusE1p, dR1p, r"$R_1\overline{I}_1$", "#d64532", lw=1.8, visible=not nullastmodus)
-    teken_vector(ax, minusE1p + dR1p, dX1p, r"$jX_1\overline{I}_1$", "#ff7f00", lw=1.8, visible=not nullastmodus)
-    teken_vector(ax, zero, U1p, r"$\overline{U}_1$", "#005eb8", lw=2.5, offset=(-0.88, 0.10))
-    teken_vector(ax, zero, U2p, r"$\overline{U}_2$", "#e0ad21", lw=2.4, offset=(-0.95, -0.10), visible=cabs(U2p) > 1e-8)
-    teken_vector(ax, U2p, dR2p, r"$R_2\overline{I}_2$", "#d64532", lw=1.8, offset=(-0.62, -0.20), visible=cabs(dR2p) > 1e-8)
-    teken_vector(ax, U2p + dR2p, dX2p, r"$jX_2\overline{I}_2$", "#ff7f00", lw=1.8, offset=(0.12, -0.30), visible=cabs(dX2p) > 1e-8)
-    teken_vector(ax, zero, E2p, r"$\overline{E}_2$", "#9a7d00", lw=2.2, offset=(0.10, -0.15), visible=cabs(E2p) > 1e-8)
-    teken_vector(ax, zero, I1p, r"$\overline{I}_1$", "#ef7f1a", lw=2.2, offset=(0.08, 0.06))
-    teken_vector(ax, zero, I0p, r"$\overline{I}_0$", "#8e44ad", lw=2.0, offset=(0.08, 0.06))
-    teken_vector(ax, zero, Ivp, r"$\overline{I}_v$", "#e74c3c", lw=1.5, linestyle="--", offset=(-0.44, 0.08), alpha=0.95)
-    teken_vector(ax, zero, Imup, r"$\overline{I}_{\mu}$", "#d2527f", lw=1.5, linestyle="--", offset=(0.10, -0.32), alpha=0.95)
-    teken_vector(ax, zero, I1primep, r"$\overline{I}'_1$", "#7d3c98", lw=1.8, linestyle="--", offset=(-0.38, 0.06), visible=cabs(I1primep) > 1e-8, alpha=0.95)
-    teken_vector(ax, zero, I2p, r"$\overline{I}_2$", "#e74c3c", lw=2.0, offset=(-0.42, -0.28), visible=cabs(I2p) > 1e-8)
-    teken_vector(ax, zero, phi2_len * eenheidsvector(d["I2"], -1.0j), r"$\overline{\Phi}_2$", "#13a85a", lw=1.8, offset=(-0.65, -0.12), visible=cabs(d["I2"]) > 1e-8 and cabs(d["I1_prime"]) > 1e-8)
-    teken_vector(ax, zero, phi1_len * eenheidsvector(d["I1_prime"], 1.0j), r"$\overline{\Phi}_1$", "#13a85a", lw=1.8, offset=(0.10, 0.10), visible=cabs(d["I2"]) > 1e-8 and cabs(d["I1_prime"]) > 1e-8)
+    teken_vector(ax, zero, minusE1p, r"$-\overline{E}_1$", "#2c7be5", lw=1.05, offset=(-0.66, 0.18))
+    teken_vector(ax, minusE1p, dR1p, r"$R_1\overline{I}_1$", "#d64532", lw=0.85, visible=not nullastmodus)
+    teken_vector(ax, minusE1p + dR1p, dX1p, r"$jX_1\overline{I}_1$", "#ff7f00", lw=0.85, visible=not nullastmodus)
+    teken_vector(ax, zero, U1p, r"$\overline{U}_1$", "#005eb8", lw=1.10, offset=(-0.66, 0.22))
+    teken_vector(ax, zero, U2p, r"$\overline{U}_2$", "#e0ad21", lw=1.05, offset=(-0.66, -0.22), visible=cabs(U2p) > 1e-8)
+    teken_vector(ax, U2p, dR2p, r"$R_2\overline{I}_2$", "#d64532", lw=0.85, offset=(-0.62, -0.20), visible=cabs(dR2p) > 1e-8)
+    teken_vector(ax, U2p + dR2p, dX2p, r"$jX_2\overline{I}_2$", "#ff7f00", lw=0.85, offset=(0.12, -0.30), visible=cabs(dX2p) > 1e-8)
+    teken_vector(ax, zero, E2p, r"$\overline{E}_2$", "#9a7d00", lw=1.00, offset=(0.15, -0.26), visible=cabs(E2p) > 1e-8)
+    teken_vector(ax, zero, I1p, r"$\overline{I}_1$", "#ef7f1a", lw=1.00, offset=(0.12, 0.18))
+    teken_vector(ax, zero, I0p, r"$\overline{I}_0$", "#8e44ad", lw=0.95, offset=(0.12, 0.18))
+    teken_vector(ax, zero, Ivp, r"$\overline{I}_v$", "#e74c3c", lw=0.75, linestyle="--", offset=(-0.54, 0.18), alpha=0.95)
+    teken_vector(ax, zero, Imup, r"$\overline{I}_{\mu}$", "#d2527f", lw=0.75, linestyle="--", offset=(0.17, -0.44), alpha=0.95)
+    teken_vector(ax, zero, I1primep, r"$\overline{I}'_1$", "#7d3c98", lw=0.85, linestyle="--", offset=(-0.58, 0.18), visible=cabs(I1primep) > 1e-8, alpha=0.95)
+    teken_vector(ax, zero, I2p, r"$\overline{I}_2$", "#e74c3c", lw=0.95, offset=(-0.56, -0.44), visible=cabs(I2p) > 1e-8)
+    teken_vector(ax, zero, phi2_len * eenheidsvector(d["I2"], -1.0j), r"$\overline{\Phi}_2$", "#13a85a", lw=0.85, offset=(-0.72, -0.26), visible=cabs(d["I2"]) > 1e-8 and cabs(d["I1_prime"]) > 1e-8)
+    teken_vector(ax, zero, phi1_len * eenheidsvector(d["I1_prime"], 1.0j), r"$\overline{\Phi}_1$", "#13a85a", lw=0.85, offset=(0.16, 0.28), visible=cabs(d["I2"]) > 1e-8 and cabs(d["I1_prime"]) > 1e-8)
     phi_richting = eenheidsvector(d["I_mu"], eenheidsvector(-1.0j * d["minus_E1"], 1.0 + 0.0j))
-    teken_vector(ax, zero, 3.10 * phi_richting, r"$\overline{\Phi}$", "#16b85f", lw=2.3, offset=(0.10, -0.32))
+    teken_vector(ax, zero, 3.10 * phi_richting, r"$\overline{\Phi}$", "#16b85f", lw=1.05, offset=(0.17, -0.44))
     teken_fasehoek(ax, 1.65, hoek_graden(U1p), hoek_graden(I1p), r"$\varphi_1$")
     if cabs(I2p) > EPS and cabs(U2p) > EPS:
         teken_fasehoek(ax, 1.18, hoek_graden(U2p), hoek_graden(I2p), r"$\varphi_2$")
-    ax.add_patch(patches.FancyArrowPatch((6.0, -1.0), (6.0, 1.0), connectionstyle="arc3,rad=0.48",
-                                         arrowstyle="-|>", mutation_scale=13, color="black", linewidth=1.5, zorder=2))
-    ax.text(6.75, 0.10, r"$\omega$", fontsize=10)
+    ax.add_patch(patches.FancyArrowPatch((5.35, -0.80), (5.35, 0.80), connectionstyle="arc3,rad=0.48",
+                                         arrowstyle="-|>", mutation_scale=8, color="black", linewidth=0.85, zorder=2))
+    ax.text(5.90, 0.08, r"$\omega$", fontsize=8)
     if nullastmodus:
         ax.text(-7.55, 8.10, "Nullast: R1I1 en jX1I1 bestaan, maar zijn te klein om zinvol te tekenen.",
                 fontsize=7.8, color="#8a5a00", ha="left", va="top",
                 bbox=dict(facecolor="#fff3c4", edgecolor="#d9a300", linewidth=0.6, alpha=0.90, pad=2.0))
-    ax.text(-7.55, -8.15, f"schaal: U × {schaal_U:.3f}  |  I × {schaal_I:.3f}  |  spanningsvallen × {vergroting:.2f}", fontsize=8.0)
+    ax.text(-6.95, -7.20, f"schaal: U × {schaal_U:.3f}  |  I × {schaal_I:.3f}  |  spanningsvallen × {vergroting:.2f}", fontsize=8.0)
     return fig
 
 
@@ -483,11 +483,11 @@ def plot_rendement(res: Resultaat):
     volgorde = np.argsort(i_arr); i_arr = i_arr[volgorde]; e_arr = e_arr[volgorde]
     uniek = np.concatenate(([True], np.diff(i_arr) > max(1e-9, 1e-7 * res.I2n)))
     i_arr = i_arr[uniek]; e_arr = e_arr[uniek]
-    fig, ax = plt.subplots(figsize=(5.2, 2.6), dpi=120)
-    ax.plot(i_arr, e_arr, linewidth=1.5)
+    fig, ax = plt.subplots(figsize=(4.6, 2.2), dpi=170)
+    ax.plot(i_arr, e_arr, linewidth=0.85)
     ax.plot([cabs(res.I2)], [res.eta], marker="o", markersize=6)
-    ax.axvline(cabs(res.I2), linewidth=0.7, linestyle="--", alpha=0.55)
-    ax.axhline(res.eta, linewidth=0.7, linestyle="--", alpha=0.55)
+    ax.axvline(cabs(res.I2), linewidth=0.50, linestyle="--", alpha=0.55)
+    ax.axhline(res.eta, linewidth=0.50, linestyle="--", alpha=0.55)
     ax.set_title(r"$\eta$ in functie van $|I_2|$"); ax.set_xlabel(r"$|I_2|$ (A)"); ax.set_ylabel(r"$\eta$ (%)")
     ax.grid(True, linewidth=0.45, alpha=0.45); ax.set_ylim(0.0, 100.5)
     gewenst_max = max(1.5 * res.I2n, 1.08 * cabs(res.I2), 1e-6)
@@ -505,13 +505,20 @@ st.markdown(
     """
     <style>
     div[data-testid="stImage"] img {
-        max-width: 100%;
+        max-width: min(100%, 720px);
         height: auto;
     }
+    div[data-testid="stImage"] {
+        display: flex;
+        justify-content: center;
+    }
     @media (max-width: 1100px) {
+        div[data-testid="stImage"] img {
+            max-width: 100%;
+        }
         section.main div.block-container {
-            padding-left: 1.0rem;
-            padding-right: 1.0rem;
+            padding-left: 0.8rem;
+            padding-right: 0.8rem;
         }
     }
     </style>
@@ -606,8 +613,7 @@ top4.metric("status", res.status)
 tab1, tab2, tab3 = st.tabs(["Vectordiagram", "Tabellen", "Rendement"])
 
 with tab1:
-    st.caption("Het vectordiagram schaalt automatisch mee met de beschikbare breedte van het browservenster.")
-    col_fig, col_info = st.columns([1.45, 1])
+    col_fig, col_info = st.columns([1.05, 1])
     with col_fig:
         st.pyplot(plot_vectordiagram(res), clear_figure=True, use_container_width=True)
     with col_info:
@@ -644,5 +650,4 @@ with tab2:
     st.dataframe(tabellen["Verliezen en werking"], hide_index=True, use_container_width=True)
 
 with tab3:
-    st.caption("De rendementsgrafiek wordt compact getoond en schaalt mee met de schermbreedte.")
     st.pyplot(plot_rendement(res), clear_figure=True, use_container_width=True)
