@@ -434,7 +434,7 @@ def plot_vectordiagram(res: Resultaat):
     phi2_len = min(3.0, 1.65 * phi2_abs / phi_ref) if phi2_abs > EPS else 0.0
 
     zero = 0.0 + 0.0j
-    fig, ax = plt.subplots(figsize=(10.8, 10.8), dpi=140)
+    fig, ax = plt.subplots(figsize=(8.0, 8.0), dpi=140)
     ax.set_aspect("equal", adjustable="box"); ax.set_xlim(-7.2, 7.2); ax.set_ylim(-7.45, 7.45); ax.axis("off")
     ax.axhline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0); ax.axvline(0, color="#bbbbbb", lw=0.7, ls=":", zorder=0)
 
