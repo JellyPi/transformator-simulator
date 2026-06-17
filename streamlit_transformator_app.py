@@ -610,44 +610,120 @@ top2.metric("I₂", format_stroom(cabs(res.I2)))
 top3.metric("η", f"{res.eta:.2f} %")
 top4.metric("status", res.status)
 
-tab1, tab2, tab3 = st.tabs(["Vectordiagram", "Tabellen", "Rendement"])
+
+# =============================================================================
+# Weergave
+# =============================================================================
+
+# Vectordiagram staat bovenaan, zonder tabblad.
+col_fig, col_info = st.columns([1.15, 1])
+
+with col_fig:
+    st.pyplot(plot_vectordiagram(res), clear_figure=True, use_container_width=True)
+
+with col_info:
+    st.subheader("Hoeken")
+    phi1_deg = fasehoek_stroom_tov_spanning(res.U1, res.I1)
+    phi2_actueel = fasehoek_stroom_tov_spanning(res.U2, res.I2) if res.invoer.modus == "belasting" else float("nan")
+    st.write(f"φ₁ = {format_hoek_signed(phi1_deg, 1)}")
+    st.write(f"φ₂ = {format_hoek_signed(phi2_actueel, 1) if res.invoer.modus == 'belasting' else '—'}")
+    st.caption("Negatief = inductief. Positief = capacitief.")
+
+# De tabbladen staan onder het vectordiagram.
+tab1, tab2 = st.tabs(["Tabellen", "Rendement"])
 
 with tab1:
-    col_fig, col_info = st.columns([1.05, 1])
-    with col_fig:
-        st.pyplot(plot_vectordiagram(res), clear_figure=True, use_container_width=True)
-    with col_info:
-        st.subheader("Hoeken")
-        phi1_deg = fasehoek_stroom_tov_spanning(res.U1, res.I1)
-        phi2_actueel = fasehoek_stroom_tov_spanning(res.U2, res.I2) if res.invoer.modus == "belasting" else float("nan")
-        st.write(f"φ₁ = {format_hoek_signed(phi1_deg, 1)}")
-        st.write(f"φ₂ = {format_hoek_signed(phi2_actueel, 1) if res.invoer.modus == 'belasting' else '—'}")
-        st.caption("Negatief = inductief. Positief = capacitief.")
-        st.subheader("Fluxweergave")
-        st.caption("Φ₁ en Φ₂ worden didactisch geschaald volgens Φ = N·I/Rm met standaardwaarden voor de kern.")
-
-with tab2:
     cos_phi1 = cosinus_tussen(res.U1, res.I1)
     cos_phi0_actueel = cosinus_tussen(res.U1, res.I0)
     phi1_deg = fasehoek_stroom_tov_spanning(res.U1, res.I1)
     phi2_actueel = fasehoek_stroom_tov_spanning(res.U2, res.I2) if res.invoer.modus == "belasting" else float("nan")
 
     tabellen = {
-        "Nominale gegevens": pd.DataFrame({"Grootheid": ["N₁/N₂", "k", "U₁,n", "U₂,n", "I₁,n", "I₂,n", "Sₙ"], "Waarde": [f"{res.invoer.N1}/{res.invoer.N2}", format_getal(res.k, "", 3), format_getal(res.invoer.U1n, "V", 1), format_getal(res.U2n, "V", 1), format_stroom(res.invoer.I1n), format_stroom(res.I2n), format_va(res.S_n)]}),
-        "Primair": pd.DataFrame({"Grootheid": ["U₁", "-E₁", "I₁", "cos φ₁", "φ₁", "I′₁", "P₁", "S₁"], "Waarde": [polar_tekst(d["U1"], "V"), polar_tekst(d["minus_E1"], "V"), polar_tekst(d["I1"], "A"), format_cosphi(cos_phi1), format_hoek_signed(phi1_deg, 1), polar_tekst(d["I1_prime"], "A"), format_watt(res.P1), format_va(res.S1)]}),
-        "Secundair": pd.DataFrame({"Grootheid": ["E₂", "U₂", "I₂", "|ZL|", "cos φ₂", "φ₂", "karakter", "P₂", "S₂"], "Waarde": [polar_tekst(d["E2"], "V"), polar_tekst(d["U2"], "V"), polar_tekst(d["I2"], "A"), format_ohm(abs(res.ZL)), format_getal(res.cos_phi2, "", 3) if res.invoer.modus == "belasting" else "—", format_hoek_signed(phi2_actueel, 1) if res.invoer.modus == "belasting" else "—", res.belastingstype, format_watt(res.P2), format_va(res.S2)]}),
-        "Proefgegevens en equivalent schema": pd.DataFrame({"Grootheid": ["PFe,n", "cos φ₀", "I₀", "Iv", "Iμ", "PCu,n", "uk,calc", "Uk", "R₁", "X₁", "R₂", "X₂", "Rv", "Xμ"], "Waarde": [format_watt(res.invoer.P_fe_n), format_cosphi(cos_phi0_actueel), polar_tekst(d["I0"], "A"), polar_tekst(d["I_v"], "A"), polar_tekst(d["I_mu"], "A"), format_watt(res.invoer.P_cu_n), format_getal(res.u_k_berekend, "%", 2), format_getal(res.U_k, "V", 2), format_ohm(res.R1), format_ohm(res.X1), format_ohm(res.R2), format_ohm(res.X2), format_ohm(res.R_v), format_ohm(res.X_mu)]}),
-        "Verliezen en werking": pd.DataFrame({"Grootheid": ["du", "I₂/I₂,n", "PCu", "PFe", "PCu/PFe", "η", "Pgem", "status"], "Waarde": [format_getal(res.d_u_pct, "%", 2), format_getal(res.belastingsgraad, "", 3), format_watt(res.P_cu), format_watt(res.P_fe), format_getal(res.P_cu / res.P_fe, "", 3) if res.P_fe > EPS else "∞", format_getal(res.eta, "%", 2), format_watt(res.vermogensfout), res.status]})
+        "Nominale gegevens": pd.DataFrame({
+            "Grootheid": ["N₁/N₂", "k", "U₁,n", "U₂,n", "I₁,n", "I₂,n", "Sₙ"],
+            "Waarde": [
+                f"{res.invoer.N1}/{res.invoer.N2}",
+                format_getal(res.k, "", 3),
+                format_getal(res.invoer.U1n, "V", 1),
+                format_getal(res.U2n, "V", 1),
+                format_stroom(res.invoer.I1n),
+                format_stroom(res.I2n),
+                format_va(res.S_n),
+            ],
+        }),
+        "Primair": pd.DataFrame({
+            "Grootheid": ["U₁", "-E₁", "I₁", "cos φ₁", "φ₁", "I′₁", "P₁", "S₁"],
+            "Waarde": [
+                polar_tekst(d["U1"], "V"),
+                polar_tekst(d["minus_E1"], "V"),
+                polar_tekst(d["I1"], "A"),
+                format_cosphi(cos_phi1),
+                format_hoek_signed(phi1_deg, 1),
+                polar_tekst(d["I1_prime"], "A"),
+                format_watt(res.P1),
+                format_va(res.S1),
+            ],
+        }),
+        "Secundair": pd.DataFrame({
+            "Grootheid": ["E₂", "U₂", "I₂", "|ZL|", "cos φ₂", "φ₂", "karakter", "P₂", "S₂"],
+            "Waarde": [
+                polar_tekst(d["E2"], "V"),
+                polar_tekst(d["U2"], "V"),
+                polar_tekst(d["I2"], "A"),
+                format_ohm(abs(res.ZL)),
+                format_getal(res.cos_phi2, "", 3) if res.invoer.modus == "belasting" else "—",
+                format_hoek_signed(phi2_actueel, 1) if res.invoer.modus == "belasting" else "—",
+                res.belastingstype,
+                format_watt(res.P2),
+                format_va(res.S2),
+            ],
+        }),
+        "Proefgegevens en equivalent schema": pd.DataFrame({
+            "Grootheid": ["PFe,n", "cos φ₀", "I₀", "Iv", "Iμ", "PCu,n", "uk,calc", "Uk", "R₁", "X₁", "R₂", "X₂", "Rv", "Xμ"],
+            "Waarde": [
+                format_watt(res.invoer.P_fe_n),
+                format_cosphi(cos_phi0_actueel),
+                polar_tekst(d["I0"], "A"),
+                polar_tekst(d["I_v"], "A"),
+                polar_tekst(d["I_mu"], "A"),
+                format_watt(res.invoer.P_cu_n),
+                format_getal(res.u_k_berekend, "%", 2),
+                format_getal(res.U_k, "V", 2),
+                format_ohm(res.R1),
+                format_ohm(res.X1),
+                format_ohm(res.R2),
+                format_ohm(res.X2),
+                format_ohm(res.R_v),
+                format_ohm(res.X_mu),
+            ],
+        }),
+        "Verliezen en werking": pd.DataFrame({
+            "Grootheid": ["du", "I₂/I₂,n", "PCu", "PFe", "PCu/PFe", "η", "Pgem", "status"],
+            "Waarde": [
+                format_getal(res.d_u_pct, "%", 2),
+                format_getal(res.belastingsgraad, "", 3),
+                format_watt(res.P_cu),
+                format_watt(res.P_fe),
+                format_getal(res.P_cu / res.P_fe, "", 3) if res.P_fe > EPS else "∞",
+                format_getal(res.eta, "%", 2),
+                format_watt(res.vermogensfout),
+                res.status,
+            ],
+        }),
     }
+
     c1, c2 = st.columns(2)
     with c1:
         for titel in ["Nominale gegevens", "Primair"]:
-            st.subheader(titel); st.dataframe(tabellen[titel], hide_index=True, use_container_width=True)
+            st.subheader(titel)
+            st.dataframe(tabellen[titel], hide_index=True, use_container_width=True)
     with c2:
         for titel in ["Secundair", "Proefgegevens en equivalent schema"]:
-            st.subheader(titel); st.dataframe(tabellen[titel], hide_index=True, use_container_width=True)
+            st.subheader(titel)
+            st.dataframe(tabellen[titel], hide_index=True, use_container_width=True)
+
     st.subheader("Verliezen en werking")
     st.dataframe(tabellen["Verliezen en werking"], hide_index=True, use_container_width=True)
 
-with tab3:
+with tab2:
     st.pyplot(plot_rendement(res), clear_figure=True, use_container_width=True)
